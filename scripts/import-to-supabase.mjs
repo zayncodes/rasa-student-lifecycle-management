@@ -92,9 +92,9 @@ function anyDate(value) {
 }
 
 /**
- * Owner names arrive with inconsistent casing (sapana / Sapana / SAPANA).
- * Casing is normalized because it is unambiguous; genuinely different
- * spellings (dhanashri / dhanshri) are left alone and reported for review.
+ * Owner names arrive with inconsistent casing (asha / Asha / ASHA). Casing is
+ * normalized because it is unambiguous; genuinely different spellings are
+ * left alone and reported for the operator to merge.
  */
 function normalizeOwnerName(value) {
   const trimmed = meaningful(value);

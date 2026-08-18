@@ -14,10 +14,10 @@ alter table public.students add column if not exists legacy_source_key text;
 create unique index if not exists students_legacy_source_key_unique
   on public.students (legacy_source_key) where legacy_source_key is not null;
 
--- The workbook's "Owner" column holds RASA staff first names (Pranjali, Sapana,
--- Dhanashri, Prasad). Those people may never receive an application login, and
--- owner_user_id -> profiles -> auth.users cannot be populated without creating
--- real accounts. The name is preserved here and used as a display fallback.
+-- The workbook's "Owner" column holds RASA staff first names. Those people may
+-- never receive an application login, and owner_user_id -> profiles ->
+-- auth.users cannot be populated without creating real accounts. The name is
+-- preserved here and used as a display fallback.
 alter table public.students add column if not exists legacy_owner_name text;
 
 -- The workbook tracks fees only as a percentage ("100% paid", "5% paid"). It
