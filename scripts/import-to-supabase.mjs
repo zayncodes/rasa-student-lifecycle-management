@@ -393,19 +393,45 @@ async function main() {
   console.log(`  courses                 ${plan.courses.length}`);
 
   // 2. Students, keyed for idempotent re-runs.
-  await chunked(plan.students.map((entry) => entry.student), async (batch) => {
-    const { error } = await supabase.from("students").upsert(batch, { onConflict: "legacy_source_key" });
-    if (error) fail("Student import failed.", error);
-  });
+  //
+  // legacy_source_key is protected by a PARTIAL unique index (WHERE
+  // legacy_source_key is not null), and PostgreSQL cannot use a partial index
+  // as an ON CONFLICT target. Existing rows are therefore resolved first and
+  // then inserted or updated explicitly, which keeps re-runs safe without
+  // requiring a schema change.
   const studentIdByKey = new Map();
   await chunked(plan.students, async (batch) => {
     const { data, error } = await supabase
       .from("students")
       .select("id, legacy_source_key")
       .in("legacy_source_key", batch.map((entry) => entry.legacyKey));
-    if (error) fail("Could not read back student ids.", error);
+    if (error) fail("Could not read existing students.", error);
     for (const row of data) studentIdByKey.set(row.legacy_source_key, row.id);
   });
+
+  const newStudents = plan.students.filter((entry) => !studentIdByKey.has(entry.legacyKey));
+  await chunked(newStudents.map((entry) => entry.student), async (batch) => {
+    const { error } = await supabase.from("students").insert(batch);
+    if (error) fail("Student insert failed.", error);
+  });
+
+  for (const entry of plan.students) {
+    const existingId = studentIdByKey.get(entry.legacyKey);
+    if (!existingId) continue;
+    const { error } = await supabase.from("students").update(entry.student).eq("id", existingId);
+    if (error) fail(`Student update failed for ${entry.legacyKey}.`, error);
+  }
+
+  if (newStudents.length > 0) {
+    await chunked(plan.students, async (batch) => {
+      const { data, error } = await supabase
+        .from("students")
+        .select("id, legacy_source_key")
+        .in("legacy_source_key", batch.map((entry) => entry.legacyKey));
+      if (error) fail("Could not read back student ids.", error);
+      for (const row of data) studentIdByKey.set(row.legacy_source_key, row.id);
+    });
+  }
   console.log(`  students                ${studentIdByKey.size}`);
 
   // 3. Enrollments. Existing rows are updated so staff edits are not duplicated.
