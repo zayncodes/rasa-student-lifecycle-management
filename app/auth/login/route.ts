@@ -56,7 +56,28 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-  if (signInError) return json("Email/staff ID or password is incorrect.", 401);
+  if (signInError) {
+    // Temporary diagnostic. The generic message above cannot distinguish a wrong
+    // password from an invalid API key, a rate limit or a network failure, which
+    // makes deployment problems undiagnosable. Never enable in normal operation:
+    // it reveals whether an account exists.
+    if (process.env.AUTH_DEBUG === "true") {
+      return Response.json({
+        error: "Email/staff ID or password is incorrect.",
+        debug: {
+          supabaseCode: signInError.code ?? null,
+          supabaseStatus: signInError.status ?? null,
+          supabaseMessage: signInError.message,
+          identifierKind: identifier.kind,
+          resolvedEmail: email,
+          projectHost: (() => { try { return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").host; } catch { return null; } })(),
+          publishableKeyPrefix: (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "").slice(0, 12),
+          serviceRoleKeyPresent: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+        },
+      }, { status: 401, headers: { "Cache-Control": "private, no-store, max-age=0", "X-Content-Type-Options": "nosniff" } });
+    }
+    return json("Email/staff ID or password is incorrect.", 401);
+  }
 
   const { data: isAdministrator, error: accessError } = await supabase.rpc("is_launch_administrator");
   if (accessError) {
