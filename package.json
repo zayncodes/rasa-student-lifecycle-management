@@ -10,12 +10,13 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/business-rules.test.mjs tests/login-identifier.test.mjs",
+    "test": "node --test tests/business-rules.test.mjs tests/login-identifier.test.mjs tests/graphy-sync.test.mjs",
     "test:render": "npm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint app components lib types --ignore-pattern .next",
     "data:audit": "node scripts/import-client-workbook.mjs",
     "data:import": "node scripts/import-to-supabase.mjs",
-    "data:snapshot": "node scripts/snapshot-supabase.mjs"
+    "data:snapshot": "node scripts/snapshot-supabase.mjs",
+    "graphy:sync": "node scripts/graphy-sync.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
