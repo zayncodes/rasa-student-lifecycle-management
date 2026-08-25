@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Activity, Student, StudentEditorOptions, ViewId, WorkspaceMode } from "@/types/domain";
+import type { GraphySyncRun } from "@/types/graphy";
 import { Avatar } from "@/components/ui/primitives";
 import { DashboardView } from "./dashboard-view";
 import { HomeDashboard } from "./home-dashboard";
 import { ReportsView } from "./reports-view";
+import { GraphySyncView } from "./graphy-sync-view";
 import { StudentsView } from "./students-view";
 import { OperationsView } from "./operations-view";
 import { StudentProfile } from "./student-profile";
@@ -23,6 +25,7 @@ const NAV_ITEMS: { id: ViewId; label: string; icon: string; group?: string; coun
   { id: "certificates", label: "Certificates", icon: "✓" },
   { id: "hr", label: "HR & placement", icon: "♧" },
   { id: "reports", label: "Reports", icon: "▥", group: "Workspace" },
+  { id: "imports", label: "Graphy sync", icon: "⇄" },
 ];
 
 const TITLES: Record<ViewId, string> = {
@@ -68,6 +71,7 @@ export function RasaShell({
   canEditStudent = false,
   canManageFees = false,
   editorOptions = { courses: [], owners: [] },
+  graphyRuns = [],
 }: {
   initialStudents: Student[];
   currentUserName: string;
@@ -78,6 +82,7 @@ export function RasaShell({
   canEditStudent?: boolean;
   canManageFees?: boolean;
   editorOptions?: StudentEditorOptions;
+  graphyRuns?: GraphySyncRun[];
 }) {
   const [students, setStudents] = useState<Student[]>(initialStudents);
   const [activities, setActivities] = useState<Activity[]>(() => initialActivities(initialStudents));
@@ -440,8 +445,9 @@ export function RasaShell({
         {activeView === "home" ? <HomeDashboard students={operationalStudents} onNavigate={navigate} onOpenStudent={openStudent} readOnly={readOnly} /> : null}
         {activeView === "dashboard" ? <DashboardView students={operationalStudents} activities={activities} onNavigate={navigate} onOpenStudent={openStudent} onAddStudent={() => setAddOpen(true)} onExport={exportStudents} currentUserName={currentUserName} readOnly={readOnly} canExport={canExport} canAddStudent={canCreateStudent && !readOnly} /> : null}
         {activeView === "students" ? <StudentsView students={students} initialFilter={activeFilter} globalSearch={globalSearch} onOpenStudent={openStudent} onAddStudent={() => setAddOpen(true)} onExport={exportStudents} readOnly={readOnly} canExport={canExport} canAddStudent={canCreateStudent && !readOnly} /> : null}
+        {activeView === "imports" ? <GraphySyncView runs={graphyRuns} /> : null}
         {activeView === "reports" ? <ReportsView students={students} onExport={exportStudents} canExport={canExport} readOnly={readOnly} /> : null}
-        {activeView !== "home" && activeView !== "dashboard" && activeView !== "students" && activeView !== "reports" ? <OperationsView view={activeView} students={operationalStudents} filter={activeFilter} onOpenStudent={openStudent} readOnly={readOnly} /> : null}
+        {activeView !== "home" && activeView !== "dashboard" && activeView !== "students" && activeView !== "reports" && activeView !== "imports" ? <OperationsView view={activeView} students={operationalStudents} filter={activeFilter} onOpenStudent={openStudent} readOnly={readOnly} /> : null}
       </div>
     </main>
 

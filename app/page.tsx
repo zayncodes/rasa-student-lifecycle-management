@@ -5,6 +5,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 import { getStudentEditorOptions, getStudentsForCurrentUser } from "@/lib/students-server";
 import { isLocalClientDataModeEnabled } from "@/lib/local-client-data.server";
+import { getGraphySyncRuns } from "@/lib/graphy-server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -61,6 +62,8 @@ export default async function Home() {
   ] satisfies PermissionCode[];
   const hasStudentEditAccess = canEditStudent.every((code) => permissions.get(code) === true);
   const editorOptions = hasStudentEditAccess ? await getStudentEditorOptions() : { courses: [], owners: [] };
+  // Sync history is permission-checked by RLS; a denied read simply returns none.
+  const graphyRuns = await getGraphySyncRuns();
   return <RasaShell
     initialStudents={students}
     currentUserName={currentUserName}
@@ -70,5 +73,6 @@ export default async function Home() {
     canEditStudent={hasStudentEditAccess}
     canManageFees={canManageFees}
     editorOptions={editorOptions}
+    graphyRuns={graphyRuns}
   />;
 }
