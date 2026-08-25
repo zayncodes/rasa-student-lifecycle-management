@@ -14,7 +14,8 @@
     "test:render": "npm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint app components lib types --ignore-pattern .next",
     "data:audit": "node scripts/import-client-workbook.mjs",
-    "data:import": "node scripts/import-to-supabase.mjs"
+    "data:import": "node scripts/import-to-supabase.mjs",
+    "data:snapshot": "node scripts/snapshot-supabase.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
